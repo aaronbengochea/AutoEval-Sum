@@ -7,8 +7,8 @@
 
 ## Current Status
 
-**Phases complete:** 0, 1, 2, 3
-**Next up:** Phase 4 — LangGraph Runtime and Run Control
+**Phases complete:** 0, 1, 2, 3, 4
+**Next up:** Phase 5 — Persistence + Pinecone Memory Integration
 
 All completed subphases are marked `[X]` in `phasedPlan.md`.
 
@@ -43,6 +43,7 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 - `api/routes/ingestion.py` — `POST /api/v1/ingestion/prepare` + `GET /api/v1/ingestion/status`
 
 ### Phase 3 — Agent Contracts and Prompt Assets ✅
+### Phase 4 — LangGraph Runtime and Run Control ✅
 - `models/schemas.py` — All agent I/O schemas:
   - `SummaryStructured` (5 key_points ≤24 words, abstract ≤120 words, validators)
   - `EvalCase`, `RubricGlobal` / `RubricAnchors`, `ScoreCard`
@@ -60,26 +61,32 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 
 ---
 
-## Phase 4 — What Needs to Be Built Next
+## Phase 4 — Completed ✅
 
-### Subphase 4.1: Run queue and status model
-- Single active run + FIFO queue
-- Status enum: `queued | running | completed | completed_with_errors | failed`
-- Concurrent starts must be serialized
+- `models/runs.py` — RunStatus enum, RunConfig, RunRecord
+- `db/runs.py` — save/get/update/list/mark_stale_runs_failed
+- `runtime/queue.py` — RunQueue singleton (asyncio.Lock, cancel flag)
+- `runtime/state.py` — RunState TypedDict, CaseExecution TypedDict
+- `runtime/nodes/` — load_docs, init_run, eval_author (v1), execute (v1/v2), judge (v1/v2), curriculum_v2, finalize, helpers
+- `runtime/graph.py` — build_graph() factory; conditional routing to finalize on cancel
+- `runtime/policies.py` — TokenBudgetExceededError, with_retry, make_semaphore
+- `api/app.py` — lifespan hook marks orphaned running→failed on startup
 
-### Subphase 4.2: LangGraph graph nodes and edges
-- Node flow: `load_docs → init_run → eval_author_v1 → execute_v1 → judge_v1 → curriculum_v2 → execute_v2 → judge_v2 → finalize`
-- Each node takes/returns `RunState` (TypedDict)
-- Conditional routing with `Literal` return types
+## Phase 5 — What Needs to Be Built Next
 
-### Subphase 4.3: Execution policies
-- 4-worker bounded parallelism (asyncio.Semaphore)
-- 3-retry exponential backoff with jitter on external calls
-- 300k token cap → graceful partial finalization with `completed_with_errors`
+### Subphase 5.1: Implement DynamoDB repositories
+- CRUD layer for runs, suites, results, events with UTC ISO timestamps
+- Output: Repository modules for all 4 tables
 
-### Subphase 4.4: Cancellation and restart semantics
-- Soft cancel at case boundaries
-- Process restart marks in-progress run as `failed`
+### Subphase 5.2: Implement Pinecone embedding/upsert/query
+- Embed via `text-embedding-004`, upsert to namespaces with full metadata
+- Output: Pinecone client wrapper
+
+### Subphase 5.3: Implement dedup logic
+- Reject candidate eval when cosine similarity >= 0.90 against `eval_prompts` namespace
+
+### Subphase 5.4: Implement failure memory usage
+- Store/retrieve failure exemplars; integrate into curriculum node
 
 ---
 
@@ -110,32 +117,48 @@ apps/backend/src/autoeval_sum/
 ├── config/
 │   └── settings.py          ← Pydantic BaseSettings, get_settings()
 ├── api/
-│   ├── app.py               ← create_app() factory
+│   ├── app.py               ← create_app() + lifespan (marks stale runs failed)
 │   ├── dependencies.py      ← DI generators for 4 DynamoDB tables
 │   └── routes/
 │       ├── health.py        ← /health + /health/ready
 │       └── ingestion.py     ← /api/v1/ingestion/prepare + /status
 ├── db/
-│   └── client.py            ← async DynamoDBClient (aioboto3)
+│   ├── client.py            ← async DynamoDBClient (aioboto3)
+│   └── runs.py              ← save/get/update/list/mark_stale_runs_failed
 ├── ingestion/
-│   ├── fetcher.py           ← MSMARCO HF loader + corpus file writer
-│   ├── filters.py           ← English check + word count + seeded sample
-│   ├── enrichment.py        ← token count + entity density + difficulty + category
-│   └── persist.py           ← save/get/list for Documents table
+│   ├── fetcher.py
+│   ├── filters.py
+│   ├── enrichment.py
+│   └── persist.py
 ├── models/
 │   ├── documents.py         ← RawDocument, EnrichedDocument
-│   └── schemas.py           ← all agent I/O schemas
-└── agents/
-    ├── summarizer.py        ← run_summarizer(), AgentError
-    ├── eval_author.py       ← run_eval_author()
-    ├── judge.py             ← run_judge()
-    ├── curriculum.py        ← run_curriculum()
-    └── prompts/
-        ├── rubric.py        ← GLOBAL_RUBRIC, RUBRIC_TEXT, FAILURE_TAXONOMY
-        ├── summarizer.py
-        ├── eval_author.py
-        ├── judge.py
-        └── curriculum.py
+│   ├── schemas.py           ← all agent I/O schemas
+│   └── runs.py              ← RunStatus enum, RunConfig, RunRecord
+├── agents/
+│   ├── summarizer.py
+│   ├── eval_author.py
+│   ├── judge.py
+│   ├── curriculum.py
+│   └── prompts/
+│       ├── rubric.py
+│       ├── summarizer.py
+│       ├── eval_author.py
+│       ├── judge.py
+│       └── curriculum.py
+└── runtime/
+    ├── queue.py             ← RunQueue singleton (Lock + cancel flag)
+    ├── state.py             ← RunState TypedDict, CaseExecution
+    ├── policies.py          ← TokenBudgetExceededError, with_retry, make_semaphore
+    ├── graph.py             ← build_graph() → CompiledStateGraph
+    └── nodes/
+        ├── helpers.py       ← doc_from_dynamo_item, compute_suite_metrics
+        ├── load_docs.py
+        ├── init_run.py
+        ├── eval_author.py   ← make_eval_author_node(version)
+        ├── execute.py       ← make_execute_node(version)
+        ├── judge.py         ← make_judge_node(version)
+        ├── curriculum.py
+        └── finalize.py
 ```
 
 ---
@@ -157,4 +180,4 @@ apps/backend/src/autoeval_sum/
 
 - Branch: `main`
 - All work committed and pushed to `github.com:aaronbengochea/AutoEval-Sum.git`
-- Latest commit: Phase 3.4 (Eval Author + Judge + Curriculum agents)
+- Latest commit: Phase 4.4 (Cancellation and restart semantics)
