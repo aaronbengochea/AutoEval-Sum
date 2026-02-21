@@ -150,7 +150,7 @@
 
 ## Phase 6 — FastAPI Public API Layer
 
-### Subphase 6.1: Implement ingestion endpoints
+### [X] Subphase 6.1: Implement ingestion endpoints
 - **Action:** Build `POST /ingestion/prepare` and `GET /ingestion/status`.
 - **Output:** Ingestion router.
 - **Exit criteria:** Ingestion can be triggered on demand with cached reuse.
