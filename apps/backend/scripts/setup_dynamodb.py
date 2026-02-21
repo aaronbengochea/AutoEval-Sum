@@ -26,52 +26,55 @@ REGION = os.getenv("AWS_REGION", "us-east-1")
 # Table definitions
 # Each entry: (table_name, key_schema, attribute_definitions, billing_mode)
 # ---------------------------------------------------------------------------
+# All tables use the generic "pk" (hash) and "sk" (range) attribute names,
+# matching the DynamoDBClient which always builds Keys as {"pk": ..., "sk": ...}.
+# Domain-specific IDs (run_id, doc_id, etc.) are stored as regular item attributes.
 TABLES = [
     {
         "TableName": "AutoEvalRuns",
+        # pk = run_id (UUIDv7)
         "KeySchema": [
-            {"AttributeName": "run_id", "KeyType": "HASH"},
+            {"AttributeName": "pk", "KeyType": "HASH"},
         ],
         "AttributeDefinitions": [
-            {"AttributeName": "run_id", "AttributeType": "S"},
+            {"AttributeName": "pk", "AttributeType": "S"},
         ],
         "BillingMode": "PAY_PER_REQUEST",
     },
     {
         "TableName": "Documents",
+        # pk = doc_id (SHA-256 stable ID)
         "KeySchema": [
-            {"AttributeName": "doc_id", "KeyType": "HASH"},
+            {"AttributeName": "pk", "KeyType": "HASH"},
         ],
         "AttributeDefinitions": [
-            {"AttributeName": "doc_id", "AttributeType": "S"},
+            {"AttributeName": "pk", "AttributeType": "S"},
         ],
         "BillingMode": "PAY_PER_REQUEST",
     },
     {
         "TableName": "EvalSuites",
-        # pk=run_id  sk=suite_version ("v1" | "v2")
-        # Allows: query all suites for a given run
+        # pk = run_id  sk = suite_version ("v1" | "v2")
         "KeySchema": [
-            {"AttributeName": "run_id", "KeyType": "HASH"},
-            {"AttributeName": "suite_version", "KeyType": "RANGE"},
+            {"AttributeName": "pk", "KeyType": "HASH"},
+            {"AttributeName": "sk", "KeyType": "RANGE"},
         ],
         "AttributeDefinitions": [
-            {"AttributeName": "run_id", "AttributeType": "S"},
-            {"AttributeName": "suite_version", "AttributeType": "S"},
+            {"AttributeName": "pk", "AttributeType": "S"},
+            {"AttributeName": "sk", "AttributeType": "S"},
         ],
         "BillingMode": "PAY_PER_REQUEST",
     },
     {
         "TableName": "EvalResults",
-        # pk=suite_id ("{run_id}#v{n}")  sk=eval_id ("v{n}-case-{0001}")
-        # Allows: query all results for a given suite
+        # pk = suite_id ("{run_id}#v{n}")  sk = eval_id ("v{n}-case-{0001}")
         "KeySchema": [
-            {"AttributeName": "suite_id", "KeyType": "HASH"},
-            {"AttributeName": "eval_id", "KeyType": "RANGE"},
+            {"AttributeName": "pk", "KeyType": "HASH"},
+            {"AttributeName": "sk", "KeyType": "RANGE"},
         ],
         "AttributeDefinitions": [
-            {"AttributeName": "suite_id", "AttributeType": "S"},
-            {"AttributeName": "eval_id", "AttributeType": "S"},
+            {"AttributeName": "pk", "AttributeType": "S"},
+            {"AttributeName": "sk", "AttributeType": "S"},
         ],
         "BillingMode": "PAY_PER_REQUEST",
     },
