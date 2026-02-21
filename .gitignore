@@ -16,7 +16,6 @@ __pycache__/
 dist/
 build/
 .eggs/
-.venv/
 venv/
 .mypy_cache/
 .ruff_cache/
@@ -25,8 +24,8 @@ venv/
 htmlcov/
 *.egg
 
-# uv
-uv.lock
+# uv — venv is local, lockfile is committed for reproducibility
+.venv/
 
 # Node / pnpm
 node_modules/
