@@ -7,8 +7,8 @@
 
 ## Current Status
 
-**Phases complete:** 0, 1, 2, 3, 4, 5, 6
-**Next up:** Phase 7 — Frontend Dashboard (Next.js)
+**Phases complete:** 0, 1, 2, 3, 4, 5, 6, 7
+**Next up:** Phase 8 — Testing and CI
 
 All completed subphases are marked `[X]` in `phasedPlan.md`.
 
@@ -66,6 +66,25 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 - Nodes wired with vector_client and DB persistence
 
 ### Phase 6 — FastAPI Public API Layer ✅
+### Phase 7 — Frontend Dashboard ✅
+- `app/providers.tsx` — QueryClientProvider (staleTime=0, retry=1)
+- `app/layout.tsx` — Providers + dark base (bg-zinc-950)
+- `app/globals.css` — Tailwind v4 @import + monospace font theme var
+- `app/api/backend/[...path]/route.ts` — catch-all proxy to FastAPI backend (no CORS)
+- `lib/types.ts` — TypeScript interfaces for all backend schemas
+- `lib/api.ts` — typed axios client (baseURL=/api/backend) for all 6 endpoints
+- `hooks/useRunStatus.ts` — polls 3 s while queued/running; stops on terminal state
+- `hooks/useRunResults.ts` — fetches once on terminal status; staleTime=Infinity
+- `hooks/useCompareLatest.ts` — staleTime=30 s, retry=false
+- `components/RunControls.tsx` — seed/corpus/suite inputs + Start/Cancel
+- `components/StatusTimeline.tsx` — color-coded status badge, 3 timestamps, error display
+- `components/MetricsCards.tsx` — v1/v2 stat grids (pass rate, aggregate avg, etc.)
+- `components/FailureTagChart.tsx` — Recharts grouped bar for 8 fixed failure tags
+- `components/WorstCasesTable.tsx` — worst_examples table per suite
+- `components/DiffSummary.tsx` — v1→v2 diff table with signed delta, color-coded
+- `components/ComparePanel.tsx` — newer/older run comparison with top failure modes
+- `components/ExportButton.tsx` — triggers /runs/{id}/export, shows artifact path
+- `app/page.tsx` — full dashboard: activeRunId in localStorage, all panels wired
 - `api/models.py` — shared `ErrorDetail` Pydantic model
 - `api/routes/runs.py` — full run lifecycle router:
   - `POST /api/v1/runs/start` (202) — creates RunRecord, fires _execute_run background task
@@ -79,23 +98,23 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 
 ---
 
-## Phase 7 — What Needs to Be Built Next
+## Phase 8 — What Needs to Be Built Next
 
-### Subphase 7.1: Scaffold app shell and data layer
-- Set up Tailwind UI shell, TanStack Query, backend proxy routes
-- Exit: Polling and API calls work without browser CORS issues
+### Subphase 8.1: Unit tests
+- Cover scoring math, pass/fail rules, taxonomy handling, difficulty heuristics, dedup threshold
+- Exit: Core business logic is deterministic and covered
 
-### Subphase 7.2: Build run controls and status timeline
-- Manual run trigger, cancel action, live status transitions
-- Exit: User can start/monitor/stop runs from UI
+### Subphase 8.2: API contract tests
+- Validate request/response schemas and run status transitions
+- Exit: API remains stable for frontend and automation
 
-### Subphase 7.3: Build results panels
-- Metrics cards, failure-tag chart (Recharts), worst 5 cases table, v1/v2 diff summary
-- Exit: Technical audience can see improvement narrative directly
+### Subphase 8.3: Integration tests with mocked externals
+- End-to-end run flow with mocked Gemini/Pinecone and local DynamoDB fixtures
+- Exit: Full loop passes in CI without external keys
 
-### Subphase 7.4: Build historical comparison and export actions
-- Current vs most recent completed run comparison panel and export button
-- Exit: One-click comparison and artifact retrieval works
+### Subphase 8.4: Optional live smoke test
+- Reduced real-service run profile with actual Gemini/Pinecone/local DynamoDB
+- Exit: Confirms real-key integration path before demo
 
 ---
 
