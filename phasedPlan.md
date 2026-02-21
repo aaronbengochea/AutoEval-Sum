@@ -21,7 +21,7 @@
 - **Output:** Backend settings model, frontend env contract, `.env.example`.
 - **Exit criteria:** Startup fails fast on missing required vars.
 
-### Subphase 0.4: Add Docker Compose baseline services
+### [X] Subphase 0.4: Add Docker Compose baseline services
 - **Action:** Write `docker-compose.yml` with `frontend`, `backend`, `dynamodb-local`, shared volumes.
 - **Output:** `docker-compose.yml`.
 - **Exit criteria:** `docker compose up` boots all services.
