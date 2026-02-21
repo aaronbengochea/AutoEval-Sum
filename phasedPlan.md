@@ -83,7 +83,7 @@
 - **Output:** Pydantic models with validation.
 - **Exit criteria:** Schema validation catches malformed model output.
 
-### Subphase 3.2: Add versioned prompt files
+### [X] Subphase 3.2: Add versioned prompt files
 - **Action:** Create prompt files for summarizer, eval author, judge, curriculum agents, plus global rubric definition.
 - **Output:** Prompt asset files, diffable and decoupled from code.
 - **Exit criteria:** Prompts are diffable and decoupled from code.
