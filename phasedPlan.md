@@ -30,22 +30,22 @@
 
 ## Phase 1 — Infra Bootstrap (Idempotent)
 
-### Subphase 1.1: Implement DynamoDB init script
+### [X] Subphase 1.1: Implement DynamoDB init script
 - **Action:** Write create-if-missing script for 4 tables: `AutoEvalRuns`, `Documents`, `EvalSuites`, `EvalResults`.
 - **Output:** Init script.
 - **Exit criteria:** Script can run repeatedly without destructive behavior.
 
-### Subphase 1.2: Implement Pinecone init script
+### [X] Subphase 1.2: Implement Pinecone init script
 - **Action:** Write script creating project-named index and namespaces `eval_prompts`, `failures`.
 - **Output:** Pinecone init script.
 - **Exit criteria:** Repeated runs are no-op safe.
 
-### Subphase 1.3: Wire init scripts into container startup flow
+### [X] Subphase 1.3: Wire init scripts into container startup flow
 - **Action:** Add startup sequence that verifies infra readiness before app runs.
 - **Output:** Updated compose/entrypoint with ordered startup.
 - **Exit criteria:** Fresh machine boot requires no manual table/index setup.
 
-### Subphase 1.4: Add health checks
+### [X] Subphase 1.4: Add health checks
 - **Action:** Implement backend readiness checks for DynamoDB + Pinecone connectivity.
 - **Output:** Health check endpoints/probes.
 - **Exit criteria:** Compose health shows healthy only when dependencies are ready.

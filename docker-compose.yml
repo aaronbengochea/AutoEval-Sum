@@ -17,6 +17,37 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── DynamoDB table setup (one-shot, idempotent) ────────────────────────────
+  setup-dynamo:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: autoeval-setup-dynamo
+    env_file:
+      - .env
+    environment:
+      DYNAMODB_ENDPOINT_URL: http://dynamodb-local:8000
+    command: ["python", "scripts/setup_dynamodb.py"]
+    depends_on:
+      dynamodb-local:
+        condition: service_healthy
+    networks:
+      - autoeval
+    restart: "no"
+
+  # ── Pinecone index setup (one-shot, idempotent) ────────────────────────────
+  setup-pinecone:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: autoeval-setup-pinecone
+    env_file:
+      - .env
+    command: ["python", "scripts/setup_pinecone.py"]
+    networks:
+      - autoeval
+    restart: "no"
+
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
     build:
@@ -28,17 +59,18 @@ services:
     env_file:
       - .env
     environment:
-      # Override endpoint so backend reaches the compose service, not localhost
       DYNAMODB_ENDPOINT_URL: http://dynamodb-local:8000
     volumes:
       - ./data:/app/data
     depends_on:
-      dynamodb-local:
-        condition: service_healthy
+      setup-dynamo:
+        condition: service_completed_successfully
+      setup-pinecone:
+        condition: service_completed_successfully
     networks:
       - autoeval
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3

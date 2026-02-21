@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from autoeval_sum.api.routes.health import router as health_router
 from autoeval_sum.config.settings import get_settings
 
 
@@ -13,8 +14,6 @@ def create_app() -> FastAPI:
         debug=settings.debug,
     )
 
-    @app.get("/health", tags=["health"])
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
+    app.include_router(health_router)
 
     return app

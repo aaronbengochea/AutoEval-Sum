@@ -25,11 +25,12 @@ class Settings(BaseSettings):
 
     # ── Pinecone ──────────────────────────────────────────────────────────────
     pinecone_api_key: str = Field(..., description="Pinecone API key")
-    pinecone_index_name: str = Field(
-        default="autoeval-sum", description="Pinecone index name"
-    )
-    pinecone_environment: str = Field(
-        default="us-east-1", description="Pinecone cloud region"
+    pinecone_index_name: str = Field(default="autoeval-sum", description="Pinecone index name")
+    pinecone_environment: str = Field(default="us-east-1", description="Pinecone cloud region")
+    pinecone_cloud: str = Field(default="aws", description="Pinecone serverless cloud provider")
+    pinecone_metric: str = Field(default="cosine", description="Pinecone index distance metric")
+    pinecone_embedding_dimension: int = Field(
+        default=768, description="Embedding dimension for text-embedding-004"
     )
 
     # ── DynamoDB ──────────────────────────────────────────────────────────────
