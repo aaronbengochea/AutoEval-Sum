@@ -1,0 +1,54 @@
+# Dataset and corpus cache — never tracked
+data/
+.cache/
+.hf_cache/
+
+# Artifacts and exports — generated outputs
+artifacts/exports/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg
+
+# uv
+uv.lock
+
+# Node / pnpm
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.pnpm-store/
+
+# Environment — never commit real keys
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+.dynamodb/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

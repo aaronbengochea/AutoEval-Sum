@@ -6,17 +6,17 @@
 
 ## Phase 0 — Project Foundation
 
-### Subphase 0.1: Create monorepo structure
+### [X] Subphase 0.1: Create monorepo structure
 - **Action:** Create `apps/frontend`, `apps/backend`, `infra`, `artifacts/exports`, `data` directories.
 - **Output:** Directories, `.gitignore` covering dataset/cache/artifacts.
 - **Exit criteria:** Clean repo layout with no ambiguity.
 
-### Subphase 0.2: Initialize tooling
+### [X] Subphase 0.2: Initialize tooling
 - **Action:** Set up `uv` for backend, `pnpm` for frontend, root `Makefile`.
 - **Output:** `pyproject.toml`, `package.json`, root `Makefile`.
 - **Exit criteria:** One-command install/build works.
 
-### Subphase 0.3: Add typed config scaffolding
+### [X] Subphase 0.3: Add typed config scaffolding
 - **Action:** Create backend settings model, frontend env contract, `.env.example`.
 - **Output:** Backend settings model, frontend env contract, `.env.example`.
 - **Exit criteria:** Startup fails fast on missing required vars.
