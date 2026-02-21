@@ -53,6 +53,14 @@ def _route_after(next_node: str, finalize_node: str = "finalize") -> Any:
     return router
 
 
+def _route_after_load_docs(state: RunState) -> Literal["init_run", "finalize"]:
+    """Route to finalize if load_docs set errors (e.g. empty corpus); otherwise init_run."""
+    if state.get("errors"):
+        log.debug("Routing to finalize after load_docs (errors=%s).", state.get("errors"))
+        return "finalize"
+    return "init_run"
+
+
 # ── Graph factory ──────────────────────────────────────────────────────────────
 
 def build_graph(
@@ -105,7 +113,12 @@ def build_graph(
     graph.set_entry_point("load_docs")
 
     # ── Edges with cancel routing ──────────────────────────────────────────────
-    graph.add_edge("load_docs", "init_run")
+    # Route to finalize immediately if load_docs found no documents.
+    graph.add_conditional_edges(
+        "load_docs",
+        _route_after_load_docs,
+        {"init_run": "init_run", "finalize": "finalize"},
+    )
 
     # After init_run → eval_author_v1 (or finalize on cancel)
     graph.add_conditional_edges(

@@ -9,6 +9,7 @@ RUN apt-get update \
 
 COPY pyproject.toml .
 COPY src/ src/
+COPY scripts/ scripts/
 
 RUN pip install --no-cache-dir -e . \
     && python -m spacy download en_core_web_sm

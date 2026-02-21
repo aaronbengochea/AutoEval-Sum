@@ -15,16 +15,21 @@ import asyncio
 import logging
 from typing import Any
 
-from google import generativeai as genai
+from google import genai as google_genai
 from pinecone import Pinecone
 
 from autoeval_sum.config.settings import get_settings
 
 log = logging.getLogger(__name__)
 
-# Embedding task types
+# Embedding task types (old SDK names → new SDK uppercase values)
 _TASK_RETRIEVAL_DOCUMENT = "retrieval_document"
 _TASK_RETRIEVAL_QUERY = "retrieval_query"
+
+_TASK_TYPE_MAP: dict[str, str] = {
+    "retrieval_document": "RETRIEVAL_DOCUMENT",
+    "retrieval_query": "RETRIEVAL_QUERY",
+}
 
 # Pinecone namespaces
 NS_EVAL_PROMPTS = "eval_prompts"
@@ -42,11 +47,17 @@ class PineconeClient:
     def __init__(self) -> None:
         self._pc: Pinecone | None = None
         self._index: Any = None
+        self._genai_client: google_genai.Client | None = None
+
+    def _get_genai_client(self) -> google_genai.Client:
+        if self._genai_client is None:
+            settings = get_settings()
+            self._genai_client = google_genai.Client(api_key=settings.google_api_key)
+        return self._genai_client
 
     def _get_index(self) -> Any:
         if self._index is None:
             settings = get_settings()
-            genai.configure(api_key=settings.google_api_key)
             self._pc = Pinecone(api_key=settings.pinecone_api_key)
             self._index = self._pc.Index(settings.pinecone_index_name)
             log.debug("Pinecone index '%s' connected.", settings.pinecone_index_name)
@@ -55,14 +66,18 @@ class PineconeClient:
     # ── Embedding ──────────────────────────────────────────────────────────────
 
     def _embed_sync(self, text: str, task_type: str = _TASK_RETRIEVAL_DOCUMENT) -> list[float]:
-        """Synchronous Google text-embedding-004 call."""
+        """Synchronous Google text-embedding-004 call via google-genai SDK (uses /v1)."""
+        from google.genai import types as genai_types
+
         settings = get_settings()
-        result = genai.embed_content(
-            model=f"models/{settings.embedding_model}",
-            content=text,
-            task_type=task_type,
+        client = self._get_genai_client()
+        sdk_task_type = _TASK_TYPE_MAP.get(task_type, task_type.upper())
+        result = client.models.embed_content(
+            model=settings.embedding_model,
+            contents=text,
+            config=genai_types.EmbedContentConfig(task_type=sdk_task_type),
         )
-        return result["embedding"]  # type: ignore[return-value]
+        return list(result.embeddings[0].values)
 
     async def embed_text(
         self,

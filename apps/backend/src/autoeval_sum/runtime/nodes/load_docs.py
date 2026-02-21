@@ -20,6 +20,12 @@ def make_load_docs_node(
     async def load_docs(state: RunState) -> dict:  # type: ignore[type-arg]
         items = await list_documents(docs_db)
         log.info("Loaded %d document records from DynamoDB.", len(items))
+        if not items:
+            log.error("No documents found in corpus. Run POST /api/v1/ingestion/prepare first.")
+            return {
+                "docs": [],
+                "errors": ["Corpus is empty — run ingestion before starting an eval run."],
+            }
         return {"docs": items}
 
     return load_docs
