@@ -54,7 +54,7 @@
 
 ## Phase 2 — Dataset Ingestion and Document Catalog
 
-### Subphase 2.1: Implement MSMARCO fetcher
+### [X] Subphase 2.1: Implement MSMARCO fetcher
 - **Action:** Build loader for `microsoft/ms_marco` docs split with local cache volume.
 - **Output:** Fetcher module with cache layer.
 - **Exit criteria:** Repeat runs reuse cache; no git-tracked dataset artifacts.
