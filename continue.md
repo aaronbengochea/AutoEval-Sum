@@ -7,8 +7,8 @@
 
 ## Current Status
 
-**Phases complete:** 0, 1, 2, 3, 4
-**Next up:** Phase 5 — Persistence + Pinecone Memory Integration
+**Phases complete:** 0, 1, 2, 3, 4, 5
+**Next up:** Phase 6 — FastAPI Public API Layer
 
 All completed subphases are marked `[X]` in `phasedPlan.md`.
 
@@ -44,6 +44,7 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 
 ### Phase 3 — Agent Contracts and Prompt Assets ✅
 ### Phase 4 — LangGraph Runtime and Run Control ✅
+### Phase 5 — Persistence + Pinecone Memory Integration ✅
 - `models/schemas.py` — All agent I/O schemas:
   - `SummaryStructured` (5 key_points ≤24 words, abstract ≤120 words, validators)
   - `EvalCase`, `RubricGlobal` / `RubricAnchors`, `ScoreCard`
@@ -72,21 +73,31 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 - `runtime/policies.py` — TokenBudgetExceededError, with_retry, make_semaphore
 - `api/app.py` — lifespan hook marks orphaned running→failed on startup
 
-## Phase 5 — What Needs to Be Built Next
+## Phase 5 — Completed ✅
 
-### Subphase 5.1: Implement DynamoDB repositories
-- CRUD layer for runs, suites, results, events with UTC ISO timestamps
-- Output: Repository modules for all 4 tables
+- `db/suites.py` — save/get/list for EvalSuites (pk=run_id, sk=suite_version)
+- `db/results.py` — save/get/list for EvalResults (pk=suite_id, sk=eval_id)
+- `vector/client.py` — PineconeClient: embed_text (text-embedding-004), upsert_vectors, embed_and_upsert, query_similar; get_pinecone_client() singleton
+- `vector/dedup.py` — is_near_duplicate (cosine >= 0.90), filter_duplicates
+- `vector/memory.py` — upsert_eval_prompts, store_failures, retrieve_failure_exemplars
+- Judge nodes: persist results to EvalResults; store failures in Pinecone; retrieve exemplars for v1
+- Curriculum node: consume failure exemplars from state; dedup filter v2 candidates; upsert accepted v2 prompts
+- Eval author node: upsert v1 prompts after generation
+- build_graph(): now accepts suites_db, results_db, vector_client (all optional)
 
-### Subphase 5.2: Implement Pinecone embedding/upsert/query
-- Embed via `text-embedding-004`, upsert to namespaces with full metadata
-- Output: Pinecone client wrapper
+## Phase 6 — What Needs to Be Built Next
 
-### Subphase 5.3: Implement dedup logic
-- Reject candidate eval when cosine similarity >= 0.90 against `eval_prompts` namespace
+### Subphase 6.1: Implement ingestion endpoints
+- `POST /ingestion/prepare` and `GET /ingestion/status` (already exists from Phase 2 - may need review)
 
-### Subphase 5.4: Implement failure memory usage
-- Store/retrieve failure exemplars; integrate into curriculum node
+### Subphase 6.2: Implement run lifecycle endpoints
+- `POST /runs/start`, `GET /runs/{id}`, `POST /runs/{id}/cancel`, `GET /runs/{id}/results`
+
+### Subphase 6.3: Implement comparison/export endpoints
+- `GET /runs/compare/latest`, `GET /runs/{id}/export` → writes to `artifacts/exports/`
+
+### Subphase 6.4: Publish OpenAPI docs and error contracts
+- Typed request/response models for all routes; self-documenting OpenAPI spec
 
 ---
 
@@ -180,4 +191,4 @@ apps/backend/src/autoeval_sum/
 
 - Branch: `main`
 - All work committed and pushed to `github.com:aaronbengochea/AutoEval-Sum.git`
-- Latest commit: Phase 4.4 (Cancellation and restart semantics)
+- Latest commit: Phase 5.4 (Failure memory + full Pinecone integration)
