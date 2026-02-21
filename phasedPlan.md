@@ -78,7 +78,7 @@
 
 ## Phase 3 — Agent Contracts and Prompt Assets
 
-### Subphase 3.1: Define strict Pydantic schemas for all agent I/O
+### [X] Subphase 3.1: Define strict Pydantic schemas for all agent I/O
 - **Action:** Implement `SummaryStructured`, `EvalCase`, `JudgeCaseResult`, `SuiteMetrics`, `CurriculumOutput`.
 - **Output:** Pydantic models with validation.
 - **Exit criteria:** Schema validation catches malformed model output.
