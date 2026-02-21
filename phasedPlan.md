@@ -179,7 +179,7 @@
 - **Output:** App shell with working API client.
 - **Exit criteria:** Polling and API calls work without browser CORS issues.
 
-### Subphase 7.2: Build run controls and status timeline
+### [X] Subphase 7.2: Build run controls and status timeline
 - **Action:** Implement manual run trigger, cancel action, live status transitions.
 - **Output:** Run control panel and status timeline component.
 - **Exit criteria:** User can start/monitor/stop runs from UI.
