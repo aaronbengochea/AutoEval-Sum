@@ -59,7 +59,7 @@
 - **Output:** Fetcher module with cache layer.
 - **Exit criteria:** Repeat runs reuse cache; no git-tracked dataset artifacts.
 
-### Subphase 2.2: Implement deterministic filtering and sampling
+### [X] Subphase 2.2: Implement deterministic filtering and sampling
 - **Action:** Apply English + >=500 words filters, seeded random sample.
 - **Output:** Filter/sample pipeline.
 - **Exit criteria:** Same seed reproduces same doc set.
