@@ -174,7 +174,7 @@
 
 ## Phase 7 — Frontend Dashboard (Next.js)
 
-### Subphase 7.1: Scaffold app shell and data layer
+### [X] Subphase 7.1: Scaffold app shell and data layer
 - **Action:** Set up Tailwind UI shell, TanStack Query, backend proxy routes.
 - **Output:** App shell with working API client.
 - **Exit criteria:** Polling and API calls work without browser CORS issues.
