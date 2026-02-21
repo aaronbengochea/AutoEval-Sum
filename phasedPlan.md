@@ -189,7 +189,7 @@
 - **Output:** Results section components.
 - **Exit criteria:** Technical audience can see improvement narrative directly.
 
-### Subphase 7.4: Build historical comparison and export actions
+### [X] Subphase 7.4: Build historical comparison and export actions
 - **Action:** Add current vs most recent completed run comparison panel and export button.
 - **Output:** Comparison panel and export action.
 - **Exit criteria:** One-click comparison and artifact retrieval works.
