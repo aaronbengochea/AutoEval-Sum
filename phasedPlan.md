@@ -64,7 +64,7 @@
 - **Output:** Filter/sample pipeline.
 - **Exit criteria:** Same seed reproduces same doc set.
 
-### Subphase 2.3: Implement enrichment pipeline
+### [X] Subphase 2.3: Implement enrichment pipeline
 - **Action:** Add category classification (LLM), token counting via Gemini `count_tokens`, entity density via spaCy `en_core_web_sm`, difficulty tagging.
 - **Output:** Enrichment pipeline with per-doc metadata.
 - **Exit criteria:** Each doc has stable metadata for suite balancing.
