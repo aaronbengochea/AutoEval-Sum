@@ -102,22 +102,22 @@
 
 ## Phase 4 — LangGraph Runtime and Run Control
 
-### Subphase 4.1: Implement run queue and status model
+### [X] Subphase 4.1: Implement run queue and status model
 - **Action:** Build single active run + FIFO queue with statuses `queued / running / completed / completed_with_errors / failed`.
 - **Output:** Queue and status management layer.
 - **Exit criteria:** Concurrent starts are serialized safely.
 
-### Subphase 4.2: Implement graph nodes and edges
+### [X] Subphase 4.2: Implement graph nodes and edges
 - **Action:** Wire full node flow: `load_docs → init_run → eval_author_v1 → execute_v1 → judge_v1 → curriculum_v2 → execute_v2 → judge_v2 → finalize`.
 - **Output:** LangGraph graph definition.
 - **Exit criteria:** One run executes full autonomous v1→v2 loop.
 
-### Subphase 4.3: Implement execution policies
+### [X] Subphase 4.3: Implement execution policies
 - **Action:** Add 4-worker bounded parallelism, 3-retry exponential backoff with jitter, 300k token cap, graceful partial finalization.
 - **Output:** Execution policy layer.
 - **Exit criteria:** Transient failures don't crash whole run.
 
-### Subphase 4.4: Implement cancellation and restart semantics
+### [X] Subphase 4.4: Implement cancellation and restart semantics
 - **Action:** Soft cancel at case boundaries; restart marks in-progress run as failed.
 - **Output:** Cancel/restart handlers.
 - **Exit criteria:** Run state is always consistent and auditable.
