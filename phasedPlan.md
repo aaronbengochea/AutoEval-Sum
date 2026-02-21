@@ -93,7 +93,7 @@
 - **Output:** Summarizer agent module.
 - **Exit criteria:** Always returns parseable structured JSON or explicit error.
 
-### Subphase 3.4: Implement Eval Author + Judge + Curriculum Agents
+### [X] Subphase 3.4: Implement Eval Author + Judge + Curriculum Agents
 - **Action:** Build strict JSON pipelines for all three agents — hallucination auto-fail, fixed 8-tag taxonomy, concise rationale/evidence constraints.
 - **Output:** Three agent modules.
 - **Exit criteria:** Deterministic agent outputs at temperature 0.
