@@ -69,7 +69,7 @@
 - **Output:** Enrichment pipeline with per-doc metadata.
 - **Exit criteria:** Each doc has stable metadata for suite balancing.
 
-### Subphase 2.4: Persist doc metadata
+### [X] Subphase 2.4: Persist doc metadata
 - **Action:** Write `Documents` records with content path, stats, category, difficulty signals.
 - **Output:** Populated `Documents` DynamoDB table.
 - **Exit criteria:** Ingest endpoint returns accepted count and metadata is queryable.
