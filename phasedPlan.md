@@ -88,7 +88,7 @@
 - **Output:** Prompt asset files, diffable and decoupled from code.
 - **Exit criteria:** Prompts are diffable and decoupled from code.
 
-### Subphase 3.3: Implement Summarizer Agent
+### [X] Subphase 3.3: Implement Summarizer Agent
 - **Action:** Gemini call producing `{ title, key_points[5], abstract<=120 words }` with bullet caps enforced.
 - **Output:** Summarizer agent module.
 - **Exit criteria:** Always returns parseable structured JSON or explicit error.
