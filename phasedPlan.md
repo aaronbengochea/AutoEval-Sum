@@ -131,12 +131,12 @@
 - **Output:** Repository modules for all 4 tables.
 - **Exit criteria:** All orchestration state persisted with UTC ISO timestamps.
 
-### Subphase 5.2: Implement Pinecone embedding/upsert/query
+### [X] Subphase 5.2: Implement Pinecone embedding/upsert/query
 - **Action:** Embed via `text-embedding-004`, upsert to namespaces with full metadata.
 - **Output:** Pinecone client wrapper.
 - **Exit criteria:** Vector writes/queries succeed and are traceable to run/suite/eval IDs.
 
-### Subphase 5.3: Implement dedup logic
+### [X] Subphase 5.3: Implement dedup logic
 - **Action:** Reject candidate eval when cosine similarity >= 0.90 against `eval_prompts` namespace.
 - **Output:** Dedup check function.
 - **Exit criteria:** Curriculum avoids near-duplicate tests.
