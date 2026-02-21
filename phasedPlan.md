@@ -165,7 +165,7 @@
 - **Output:** Comparison and export routes.
 - **Exit criteria:** JSON artifact export works.
 
-### Subphase 6.4: Publish OpenAPI docs and error contracts
+### [X] Subphase 6.4: Publish OpenAPI docs and error contracts
 - **Action:** Ensure all routes have typed request/response models surfaced in FastAPI default docs.
 - **Output:** Self-documenting OpenAPI spec.
 - **Exit criteria:** API contracts are self-documenting.

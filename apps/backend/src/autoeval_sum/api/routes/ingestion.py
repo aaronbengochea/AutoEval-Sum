@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from autoeval_sum.api.dependencies import get_documents_db
+from autoeval_sum.api.models import ErrorDetail
 from autoeval_sum.config.settings import get_settings
 from autoeval_sum.db.client import DynamoDBClient
 from autoeval_sum.ingestion.enrichment import enrich_documents
@@ -59,6 +60,10 @@ class IngestionStatusResponse(BaseModel):
         "samples deterministically by seed, enriches with token counts / entity density "
         "/ difficulty / category, and persists to DynamoDB. Idempotent — safe to re-run."
     ),
+    responses={
+        422: {"model": ErrorDetail, "description": "Invalid corpus parameters"},
+        500: {"model": ErrorDetail, "description": "Ingestion pipeline error"},
+    },
 )
 async def prepare_ingestion(
     request: PrepareRequest,

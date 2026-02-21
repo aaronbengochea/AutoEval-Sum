@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from autoeval_sum.api.dependencies import get_runs_db, get_suites_db
+from autoeval_sum.api.models import ErrorDetail
 from autoeval_sum.config.settings import get_settings
 from autoeval_sum.db.client import DynamoDBClient
 from autoeval_sum.db.runs import get_run, list_runs, save_run, update_run_status
@@ -204,6 +205,7 @@ async def start_run(
     response_model=RunStatusResponse,
     summary="Get run status",
     description="Returns the current status and top-level metrics for a run.",
+    responses={404: {"model": ErrorDetail, "description": "Run not found"}},
 )
 async def get_run_status(
     run_id: str,
@@ -233,6 +235,7 @@ async def get_run_status(
         "Signals the active run to stop at the next eval-case boundary.  "
         "If the run_id is not currently active, cancel_requested will be False."
     ),
+    responses={404: {"model": ErrorDetail, "description": "Run not found"}},
 )
 async def cancel_run(
     run_id: str,
@@ -266,6 +269,7 @@ async def cancel_run(
     response_model=RunResultsResponse,
     summary="Get run results",
     description="Returns the run record plus both suite metric snapshots from DynamoDB.",
+    responses={404: {"model": ErrorDetail, "description": "Run not found"}},
 )
 async def get_run_results(
     run_id: str,
@@ -296,6 +300,7 @@ async def get_run_results(
         "(status = completed or completed_with_errors). "
         "Returns 404 if fewer than two completed runs exist."
     ),
+    responses={404: {"model": ErrorDetail, "description": "Fewer than two completed runs"}},
 )
 async def compare_latest(
     runs_db: DynamoDBClient = Depends(get_runs_db),
@@ -335,6 +340,7 @@ async def compare_latest(
         "Writes a JSON artifact containing the run record and all suite metrics "
         "to artifacts/exports/{run_id}.json. Returns the artifact path."
     ),
+    responses={404: {"model": ErrorDetail, "description": "Run not found"}},
 )
 async def export_run(
     run_id: str,

@@ -6,6 +6,7 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pinecone import Pinecone
 
+from autoeval_sum.api.models import ErrorDetail
 from autoeval_sum.config.settings import get_settings
 
 router = APIRouter(tags=["health"])
@@ -18,7 +19,10 @@ async def liveness() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/health/ready")
+@router.get(
+    "/health/ready",
+    responses={503: {"model": ErrorDetail, "description": "One or more dependencies unreachable"}},
+)
 async def readiness() -> JSONResponse:
     """
     Readiness probe — checks live connectivity to DynamoDB and Pinecone.
