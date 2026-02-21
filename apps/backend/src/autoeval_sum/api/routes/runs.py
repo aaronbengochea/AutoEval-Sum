@@ -10,6 +10,7 @@ GET  /api/v1/runs/{run_id}/export  — write full run data to artifacts/exports/
 """
 
 import asyncio
+import json
 import logging
 import os
 from pathlib import Path
@@ -22,7 +23,7 @@ from pydantic import BaseModel, Field
 from autoeval_sum.api.dependencies import get_runs_db, get_suites_db
 from autoeval_sum.config.settings import get_settings
 from autoeval_sum.db.client import DynamoDBClient
-from autoeval_sum.db.runs import get_run, save_run, update_run_status
+from autoeval_sum.db.runs import get_run, list_runs, save_run, update_run_status
 from autoeval_sum.db.suites import list_suites_for_run
 from autoeval_sum.models.runs import RunConfig, RunRecord, RunStatus
 from autoeval_sum.runtime.graph import build_graph
@@ -73,6 +74,24 @@ class RunResultsResponse(BaseModel):
     metrics_v1: dict[str, Any] | None
     metrics_v2: dict[str, Any] | None
     suites: list[dict[str, Any]]
+
+
+class CompareRunSummary(BaseModel):
+    run_id: str
+    status: str
+    completed_at: str | None
+    metrics_v1: dict[str, Any] | None
+    metrics_v2: dict[str, Any] | None
+
+
+class CompareLatestResponse(BaseModel):
+    newer: CompareRunSummary
+    older: CompareRunSummary
+
+
+class ExportResponse(BaseModel):
+    run_id: str
+    artifact_path: str
 
 
 # ── Background run executor ───────────────────────────────────────────────────
@@ -266,3 +285,84 @@ async def get_run_results(
         metrics_v2=run.metrics_v2,
         suites=suites,
     )
+
+
+@router.get(
+    "/compare/latest",
+    response_model=CompareLatestResponse,
+    summary="Compare two most recent completed runs",
+    description=(
+        "Returns side-by-side metrics for the two most recently completed runs "
+        "(status = completed or completed_with_errors). "
+        "Returns 404 if fewer than two completed runs exist."
+    ),
+)
+async def compare_latest(
+    runs_db: DynamoDBClient = Depends(get_runs_db),
+) -> CompareLatestResponse:
+    all_runs = await list_runs(runs_db)
+    completed = [
+        r for r in all_runs
+        if r.status.value in ("completed", "completed_with_errors")
+    ]
+    completed.sort(key=lambda r: r.completed_at or "", reverse=True)
+
+    if len(completed) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fewer than two completed runs exist; comparison unavailable.",
+        )
+
+    newer, older = completed[0], completed[1]
+
+    def _summary(run: Any) -> CompareRunSummary:
+        return CompareRunSummary(
+            run_id=run.run_id,
+            status=run.status.value,
+            completed_at=run.completed_at,
+            metrics_v1=run.metrics_v1,
+            metrics_v2=run.metrics_v2,
+        )
+
+    return CompareLatestResponse(newer=_summary(newer), older=_summary(older))
+
+
+@router.get(
+    "/{run_id}/export",
+    response_model=ExportResponse,
+    summary="Export full run data to artifact file",
+    description=(
+        "Writes a JSON artifact containing the run record and all suite metrics "
+        "to artifacts/exports/{run_id}.json. Returns the artifact path."
+    ),
+)
+async def export_run(
+    run_id: str,
+    runs_db: DynamoDBClient = Depends(get_runs_db),
+    suites_db: DynamoDBClient = Depends(get_suites_db),
+) -> ExportResponse:
+    run = await get_run(run_id, runs_db)
+    if run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Run {run_id} not found")
+
+    suites = await list_suites_for_run(run_id, suites_db)
+
+    artifact: dict[str, Any] = {
+        "run_id": run.run_id,
+        "status": run.status.value,
+        "config": run.config.model_dump(),
+        "created_at": run.created_at,
+        "started_at": run.started_at,
+        "completed_at": run.completed_at,
+        "error_message": run.error_message,
+        "metrics_v1": run.metrics_v1,
+        "metrics_v2": run.metrics_v2,
+        "suites": suites,
+    }
+
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    artifact_path = EXPORTS_DIR / f"{run_id}.json"
+    artifact_path.write_text(json.dumps(artifact, indent=2, default=str))
+
+    log.info("Run %s exported to %s", run_id, artifact_path)
+    return ExportResponse(run_id=run_id, artifact_path=str(artifact_path))

@@ -160,7 +160,7 @@
 - **Output:** Runs router.
 - **Exit criteria:** Frontend can fully control and monitor runs.
 
-### Subphase 6.3: Implement comparison/export endpoints
+### [X] Subphase 6.3: Implement comparison/export endpoints
 - **Action:** Build `GET /runs/compare/latest` and `GET /runs/{id}/export` writing to `artifacts/exports/`.
 - **Output:** Comparison and export routes.
 - **Exit criteria:** JSON artifact export works.
