@@ -7,8 +7,8 @@
 
 ## Current Status
 
-**Phases complete:** 0, 1, 2, 3, 4, 5
-**Next up:** Phase 6 — FastAPI Public API Layer
+**Phases complete:** 0, 1, 2, 3, 4, 5, 6
+**Next up:** Phase 7 — Frontend Dashboard (Next.js)
 
 All completed subphases are marked `[X]` in `phasedPlan.md`.
 
@@ -43,27 +43,11 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 - `api/routes/ingestion.py` — `POST /api/v1/ingestion/prepare` + `GET /api/v1/ingestion/status`
 
 ### Phase 3 — Agent Contracts and Prompt Assets ✅
+- `models/schemas.py` — All agent I/O schemas
+- Prompt files in `agents/prompts/` (rubric, summarizer, eval_author, judge, curriculum)
+- Agent modules in `agents/` (summarizer, eval_author, judge, curriculum)
+
 ### Phase 4 — LangGraph Runtime and Run Control ✅
-### Phase 5 — Persistence + Pinecone Memory Integration ✅
-- `models/schemas.py` — All agent I/O schemas:
-  - `SummaryStructured` (5 key_points ≤24 words, abstract ≤120 words, validators)
-  - `EvalCase`, `RubricGlobal` / `RubricAnchors`, `ScoreCard`
-  - `JudgeCaseResult` (rationale ≤60 words, FailureTag Literal, hallucination auto-fail model_validator)
-  - `SuiteMetrics`, `CurriculumOutput` / `ImprovementPlan`
-- `agents/prompts/rubric.py` — `GLOBAL_RUBRIC` instance, `RUBRIC_TEXT`, `FAILURE_TAXONOMY`
-- `agents/prompts/summarizer.py` — `SUMMARIZER_SYSTEM_PROMPT` + `SUMMARIZER_USER_TEMPLATE`
-- `agents/prompts/eval_author.py` — `EVAL_AUTHOR_SYSTEM_PROMPT`
-- `agents/prompts/judge.py` — `JUDGE_SYSTEM_PROMPT` + `JUDGE_USER_TEMPLATE`
-- `agents/prompts/curriculum.py` — `CURRICULUM_SYSTEM_PROMPT`
-- `agents/summarizer.py` — `run_summarizer()`, `AgentError` exception
-- `agents/eval_author.py` — `run_eval_author()`
-- `agents/judge.py` — `run_judge()` (canonically recomputes aggregate + pass)
-- `agents/curriculum.py` — `run_curriculum()`
-
----
-
-## Phase 4 — Completed ✅
-
 - `models/runs.py` — RunStatus enum, RunConfig, RunRecord
 - `db/runs.py` — save/get/update/list/mark_stale_runs_failed
 - `runtime/queue.py` — RunQueue singleton (asyncio.Lock, cancel flag)
@@ -73,31 +57,45 @@ All completed subphases are marked `[X]` in `phasedPlan.md`.
 - `runtime/policies.py` — TokenBudgetExceededError, with_retry, make_semaphore
 - `api/app.py` — lifespan hook marks orphaned running→failed on startup
 
-## Phase 5 — Completed ✅
-
+### Phase 5 — Persistence + Pinecone Memory Integration ✅
 - `db/suites.py` — save/get/list for EvalSuites (pk=run_id, sk=suite_version)
 - `db/results.py` — save/get/list for EvalResults (pk=suite_id, sk=eval_id)
-- `vector/client.py` — PineconeClient: embed_text (text-embedding-004), upsert_vectors, embed_and_upsert, query_similar; get_pinecone_client() singleton
+- `vector/client.py` — PineconeClient: embed_text (text-embedding-004), upsert/query; singleton
 - `vector/dedup.py` — is_near_duplicate (cosine >= 0.90), filter_duplicates
 - `vector/memory.py` — upsert_eval_prompts, store_failures, retrieve_failure_exemplars
-- Judge nodes: persist results to EvalResults; store failures in Pinecone; retrieve exemplars for v1
-- Curriculum node: consume failure exemplars from state; dedup filter v2 candidates; upsert accepted v2 prompts
-- Eval author node: upsert v1 prompts after generation
-- build_graph(): now accepts suites_db, results_db, vector_client (all optional)
+- Nodes wired with vector_client and DB persistence
 
-## Phase 6 — What Needs to Be Built Next
+### Phase 6 — FastAPI Public API Layer ✅
+- `api/models.py` — shared `ErrorDetail` Pydantic model
+- `api/routes/runs.py` — full run lifecycle router:
+  - `POST /api/v1/runs/start` (202) — creates RunRecord, fires _execute_run background task
+  - `GET /api/v1/runs/{run_id}` — status, config, timestamps, metrics
+  - `POST /api/v1/runs/{run_id}/cancel` — delegates to RunQueue.request_cancel()
+  - `GET /api/v1/runs/{run_id}/results` — run record + all suite snapshots
+  - `GET /api/v1/runs/compare/latest` — newer/older CompareRunSummary side-by-side
+  - `GET /api/v1/runs/{run_id}/export` — writes artifacts/exports/{run_id}.json
+- All routes have typed response_model + `responses=` error contracts (404/422/500/503)
+- OpenAPI spec auto-generated at `/docs` and `/redoc`
 
-### Subphase 6.1: Implement ingestion endpoints
-- `POST /ingestion/prepare` and `GET /ingestion/status` (already exists from Phase 2 - may need review)
+---
 
-### Subphase 6.2: Implement run lifecycle endpoints
-- `POST /runs/start`, `GET /runs/{id}`, `POST /runs/{id}/cancel`, `GET /runs/{id}/results`
+## Phase 7 — What Needs to Be Built Next
 
-### Subphase 6.3: Implement comparison/export endpoints
-- `GET /runs/compare/latest`, `GET /runs/{id}/export` → writes to `artifacts/exports/`
+### Subphase 7.1: Scaffold app shell and data layer
+- Set up Tailwind UI shell, TanStack Query, backend proxy routes
+- Exit: Polling and API calls work without browser CORS issues
 
-### Subphase 6.4: Publish OpenAPI docs and error contracts
-- Typed request/response models for all routes; self-documenting OpenAPI spec
+### Subphase 7.2: Build run controls and status timeline
+- Manual run trigger, cancel action, live status transitions
+- Exit: User can start/monitor/stop runs from UI
+
+### Subphase 7.3: Build results panels
+- Metrics cards, failure-tag chart (Recharts), worst 5 cases table, v1/v2 diff summary
+- Exit: Technical audience can see improvement narrative directly
+
+### Subphase 7.4: Build historical comparison and export actions
+- Current vs most recent completed run comparison panel and export button
+- Exit: One-click comparison and artifact retrieval works
 
 ---
 
@@ -130,12 +128,16 @@ apps/backend/src/autoeval_sum/
 ├── api/
 │   ├── app.py               ← create_app() + lifespan (marks stale runs failed)
 │   ├── dependencies.py      ← DI generators for 4 DynamoDB tables
+│   ├── models.py            ← shared ErrorDetail model
 │   └── routes/
 │       ├── health.py        ← /health + /health/ready
-│       └── ingestion.py     ← /api/v1/ingestion/prepare + /status
+│       ├── ingestion.py     ← /api/v1/ingestion/prepare + /status
+│       └── runs.py          ← /api/v1/runs/* (start, status, cancel, results, compare, export)
 ├── db/
 │   ├── client.py            ← async DynamoDBClient (aioboto3)
-│   └── runs.py              ← save/get/update/list/mark_stale_runs_failed
+│   ├── runs.py              ← save/get/update/list/mark_stale_runs_failed
+│   ├── suites.py            ← save/get/list for EvalSuites
+│   └── results.py           ← save/get/list for EvalResults
 ├── ingestion/
 │   ├── fetcher.py
 │   ├── filters.py
@@ -156,20 +158,24 @@ apps/backend/src/autoeval_sum/
 │       ├── eval_author.py
 │       ├── judge.py
 │       └── curriculum.py
-└── runtime/
-    ├── queue.py             ← RunQueue singleton (Lock + cancel flag)
-    ├── state.py             ← RunState TypedDict, CaseExecution
-    ├── policies.py          ← TokenBudgetExceededError, with_retry, make_semaphore
-    ├── graph.py             ← build_graph() → CompiledStateGraph
-    └── nodes/
-        ├── helpers.py       ← doc_from_dynamo_item, compute_suite_metrics
-        ├── load_docs.py
-        ├── init_run.py
-        ├── eval_author.py   ← make_eval_author_node(version)
-        ├── execute.py       ← make_execute_node(version)
-        ├── judge.py         ← make_judge_node(version)
-        ├── curriculum.py
-        └── finalize.py
+├── runtime/
+│   ├── queue.py             ← RunQueue singleton (Lock + cancel flag)
+│   ├── state.py             ← RunState TypedDict, CaseExecution
+│   ├── policies.py          ← TokenBudgetExceededError, with_retry, make_semaphore
+│   ├── graph.py             ← build_graph() → CompiledStateGraph
+│   └── nodes/
+│       ├── helpers.py       ← doc_from_dynamo_item, compute_suite_metrics
+│       ├── load_docs.py
+│       ├── init_run.py
+│       ├── eval_author.py   ← make_eval_author_node(version)
+│       ├── execute.py       ← make_execute_node(version)
+│       ├── judge.py         ← make_judge_node(version)
+│       ├── curriculum.py
+│       └── finalize.py
+└── vector/
+    ├── client.py            ← PineconeClient, get_pinecone_client()
+    ├── dedup.py             ← is_near_duplicate, filter_duplicates
+    └── memory.py            ← upsert_eval_prompts, store_failures, retrieve_failure_exemplars
 ```
 
 ---
@@ -191,4 +197,4 @@ apps/backend/src/autoeval_sum/
 
 - Branch: `main`
 - All work committed and pushed to `github.com:aaronbengochea/AutoEval-Sum.git`
-- Latest commit: Phase 5.4 (Failure memory + full Pinecone integration)
+- Latest commit: Phase 6.4 (OpenAPI docs and error contracts)
