@@ -5,8 +5,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+// BACKEND_URL is a server-side runtime var — never baked into client JS.
+// In Docker: http://backend:8080 (internal service name).
+// Locally without Docker: http://localhost:8080.
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://backend:8000";
+  process.env.BACKEND_URL ?? "http://localhost:8080";
 
 type Params = Promise<{ path: string[] }>;
 
