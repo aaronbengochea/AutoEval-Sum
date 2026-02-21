@@ -126,7 +126,7 @@
 
 ## Phase 5 — Persistence + Pinecone Memory Integration
 
-### Subphase 5.1: Implement DynamoDB repositories
+### [X] Subphase 5.1: Implement DynamoDB repositories
 - **Action:** Build CRUD layer for runs, suites, results, events with UTC ISO timestamps.
 - **Output:** Repository modules for all 4 tables.
 - **Exit criteria:** All orchestration state persisted with UTC ISO timestamps.

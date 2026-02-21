@@ -2,7 +2,8 @@
 judge node — scores summaries produced by the execute node.
 
 Shared by both iterations (v1 and v2) via the make_judge_node factory.
-Computes per-case JudgeCaseResult and suite-level SuiteMetrics.
+Computes per-case JudgeCaseResult, suite-level SuiteMetrics, and persists
+both to DynamoDB.
 """
 
 import asyncio
@@ -11,6 +12,8 @@ from typing import Any
 
 from autoeval_sum.agents.judge import run_judge
 from autoeval_sum.agents.summarizer import AgentError
+from autoeval_sum.db.client import DynamoDBClient
+from autoeval_sum.db.results import save_results_batch
 from autoeval_sum.models.schemas import EvalCase, SummaryStructured
 from autoeval_sum.runtime.nodes.helpers import (
     compute_suite_metrics,
@@ -30,12 +33,22 @@ from autoeval_sum.runtime.state import RunState
 log = logging.getLogger(__name__)
 
 
-def make_judge_node(suite_version: str = "v1") -> Any:
+def make_judge_node(
+    suite_version: str = "v1",
+    results_db: DynamoDBClient | None = None,
+) -> Any:
     """
     Return the judge node for the given suite version.
 
     Iterates over all successful executions, runs the Judge agent with retry,
-    then computes SuiteMetrics from all results.
+    computes SuiteMetrics, and persists individual results to EvalResults.
+
+    Parameters
+    ----------
+    suite_version:
+        "v1" or "v2".
+    results_db:
+        DynamoDB client for the EvalResults table. If None, persistence is skipped.
     """
     from autoeval_sum.config.settings import get_settings
 
@@ -78,7 +91,6 @@ def make_judge_node(suite_version: str = "v1") -> Any:
             raw_summary = exec_item.get("summary")
 
             if raw_summary is None:
-                # Summarizer failed — no summary to judge
                 return None
 
             async with sem:
@@ -137,6 +149,14 @@ def make_judge_node(suite_version: str = "v1") -> Any:
 
         suite_id = f"{run_id}#v{iteration_n}"
         metrics = compute_suite_metrics(suite_id, suite_data, judge_results)
+
+        # Persist results to DynamoDB
+        if results_db is not None and judge_results:
+            try:
+                await save_results_batch(suite_id, judge_results, results_db)
+            except Exception as exc:
+                log.error("Failed to persist results for %s: %s", suite_id, exc)
+                errors.append(f"persist_results_{suite_version}: {exc}")
 
         log.info(
             "Run %s: judge_%s — %d results  pass_rate=%.2f  aggregate=%.2f",

@@ -57,6 +57,8 @@ def _route_after(next_node: str, finalize_node: str = "finalize") -> Any:
 def build_graph(
     docs_db: DynamoDBClient,
     runs_db: DynamoDBClient,
+    suites_db: DynamoDBClient | None = None,
+    results_db: DynamoDBClient | None = None,
 ) -> Any:
     """
     Compile and return the run pipeline StateGraph.
@@ -67,6 +69,10 @@ def build_graph(
         DynamoDB client for the Documents table.
     runs_db:
         DynamoDB client for the AutoEvalRuns table.
+    suites_db:
+        DynamoDB client for the EvalSuites table (optional; enables suite persistence).
+    results_db:
+        DynamoDB client for the EvalResults table (optional; enables result persistence).
     """
     graph: StateGraph = StateGraph(RunState)  # type: ignore[type-arg]
 
@@ -75,11 +81,11 @@ def build_graph(
     graph.add_node("init_run", make_init_run_node())
     graph.add_node("eval_author_v1", make_eval_author_node("v1"))
     graph.add_node("execute_v1", make_execute_node("v1"))
-    graph.add_node("judge_v1", make_judge_node("v1"))
+    graph.add_node("judge_v1", make_judge_node("v1", results_db=results_db))
     graph.add_node("curriculum_v2", make_curriculum_node())  # produces eval_suite_v2
     graph.add_node("execute_v2", make_execute_node("v2"))
-    graph.add_node("judge_v2", make_judge_node("v2"))
-    graph.add_node("finalize", make_finalize_node(runs_db))
+    graph.add_node("judge_v2", make_judge_node("v2", results_db=results_db))
+    graph.add_node("finalize", make_finalize_node(runs_db, suites_db=suites_db))
 
     # ── Entry point ────────────────────────────────────────────────────────────
     graph.set_entry_point("load_docs")
