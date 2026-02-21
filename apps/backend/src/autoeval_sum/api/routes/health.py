@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 import aioboto3
-import httpx
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pinecone import Pinecone

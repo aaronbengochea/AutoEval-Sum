@@ -155,7 +155,7 @@
 - **Output:** Ingestion router.
 - **Exit criteria:** Ingestion can be triggered on demand with cached reuse.
 
-### Subphase 6.2: Implement run lifecycle endpoints
+### [X] Subphase 6.2: Implement run lifecycle endpoints
 - **Action:** Build `POST /runs/start`, `GET /runs/{id}`, `POST /runs/{id}/cancel`, `GET /runs/{id}/results`.
 - **Output:** Runs router.
 - **Exit criteria:** Frontend can fully control and monitor runs.

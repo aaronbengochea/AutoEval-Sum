@@ -55,6 +55,11 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B", "Q"]
 
+[tool.ruff.lint.per-file-ignores]
+# FastAPI routes intentionally use Depends() in defaults (B008) and
+# re-raise HTTPException inside except blocks (B904) — both are idiomatic.
+"src/autoeval_sum/api/routes/*.py" = ["B008", "B904"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true

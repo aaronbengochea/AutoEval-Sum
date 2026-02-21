@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from autoeval_sum.api.routes.health import router as health_router
 from autoeval_sum.api.routes.ingestion import router as ingestion_router
+from autoeval_sum.api.routes.runs import router as runs_router
 from autoeval_sum.config.settings import get_settings
 from autoeval_sum.db.client import DynamoDBClient
 from autoeval_sum.db.runs import mark_stale_runs_failed
@@ -44,5 +45,6 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(ingestion_router)
+    app.include_router(runs_router)
 
     return app
