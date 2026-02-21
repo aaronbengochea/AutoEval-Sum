@@ -201,6 +201,47 @@ async def start_run(
 
 
 @router.get(
+    "/compare/latest",
+    response_model=CompareLatestResponse,
+    summary="Compare two most recent completed runs",
+    description=(
+        "Returns side-by-side metrics for the two most recently completed runs "
+        "(status = completed or completed_with_errors). "
+        "Returns 404 if fewer than two completed runs exist."
+    ),
+    responses={404: {"model": ErrorDetail, "description": "Fewer than two completed runs"}},
+)
+async def compare_latest(
+    runs_db: DynamoDBClient = Depends(get_runs_db),
+) -> CompareLatestResponse:
+    all_runs = await list_runs(runs_db)
+    completed = [
+        r for r in all_runs
+        if r.status.value in ("completed", "completed_with_errors")
+    ]
+    completed.sort(key=lambda r: r.completed_at or "", reverse=True)
+
+    if len(completed) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fewer than two completed runs exist; comparison unavailable.",
+        )
+
+    newer, older = completed[0], completed[1]
+
+    def _summary(run: Any) -> CompareRunSummary:
+        return CompareRunSummary(
+            run_id=run.run_id,
+            status=run.status.value,
+            completed_at=run.completed_at,
+            metrics_v1=run.metrics_v1,
+            metrics_v2=run.metrics_v2,
+        )
+
+    return CompareLatestResponse(newer=_summary(newer), older=_summary(older))
+
+
+@router.get(
     "/{run_id}",
     response_model=RunStatusResponse,
     summary="Get run status",
@@ -289,47 +330,6 @@ async def get_run_results(
         metrics_v2=run.metrics_v2,
         suites=suites,
     )
-
-
-@router.get(
-    "/compare/latest",
-    response_model=CompareLatestResponse,
-    summary="Compare two most recent completed runs",
-    description=(
-        "Returns side-by-side metrics for the two most recently completed runs "
-        "(status = completed or completed_with_errors). "
-        "Returns 404 if fewer than two completed runs exist."
-    ),
-    responses={404: {"model": ErrorDetail, "description": "Fewer than two completed runs"}},
-)
-async def compare_latest(
-    runs_db: DynamoDBClient = Depends(get_runs_db),
-) -> CompareLatestResponse:
-    all_runs = await list_runs(runs_db)
-    completed = [
-        r for r in all_runs
-        if r.status.value in ("completed", "completed_with_errors")
-    ]
-    completed.sort(key=lambda r: r.completed_at or "", reverse=True)
-
-    if len(completed) < 2:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Fewer than two completed runs exist; comparison unavailable.",
-        )
-
-    newer, older = completed[0], completed[1]
-
-    def _summary(run: Any) -> CompareRunSummary:
-        return CompareRunSummary(
-            run_id=run.run_id,
-            status=run.status.value,
-            completed_at=run.completed_at,
-            metrics_v1=run.metrics_v1,
-            metrics_v2=run.metrics_v2,
-        )
-
-    return CompareLatestResponse(newer=_summary(newer), older=_summary(older))
 
 
 @router.get(
