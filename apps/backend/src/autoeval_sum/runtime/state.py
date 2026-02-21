@@ -73,6 +73,9 @@ class RunState(TypedDict, total=False):
     judge_results_v2: list[dict[str, Any]]
     metrics_v2: dict[str, Any] | None
 
+    # Pinecone context (populated by judge_v1 for use in curriculum_v2)
+    pinecone_failure_exemplars: list[str]
+
     # Control
     token_budget_used: int
     cancel_requested: bool

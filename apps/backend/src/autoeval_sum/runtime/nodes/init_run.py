@@ -17,6 +17,7 @@ async def init_run(state: RunState) -> dict:  # type: ignore[type-arg]
         "token_budget_used": 0,
         "cancel_requested": False,
         "errors": [],
+        "pinecone_failure_exemplars": [],
         "eval_suite_v1": [],
         "executions_v1": [],
         "judge_results_v1": [],

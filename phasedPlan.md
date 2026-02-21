@@ -141,7 +141,7 @@
 - **Output:** Dedup check function.
 - **Exit criteria:** Curriculum avoids near-duplicate tests.
 
-### Subphase 5.4: Implement failure memory usage
+### [X] Subphase 5.4: Implement failure memory usage
 - **Action:** Store/retrieve failure exemplars for targeted v2 generation.
 - **Output:** Failure memory read/write paths integrated into curriculum agent.
 - **Exit criteria:** Curriculum references prior failure modes in improvement plan.
