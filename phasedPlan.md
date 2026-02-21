@@ -184,7 +184,7 @@
 - **Output:** Run control panel and status timeline component.
 - **Exit criteria:** User can start/monitor/stop runs from UI.
 
-### Subphase 7.3: Build results panels
+### [X] Subphase 7.3: Build results panels
 - **Action:** Build metrics cards, failure-tag chart (Recharts), worst 5 cases table, v1/v2 diff summary.
 - **Output:** Results section components.
 - **Exit criteria:** Technical audience can see improvement narrative directly.
