@@ -49,6 +49,26 @@ services:
       - autoeval
     restart: "no"
 
+  # ── Corpus ingestion setup (one-shot, idempotent) ─────────────────────────
+  setup-corpus:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: autoeval-setup-corpus
+    env_file:
+      - .env
+    environment:
+      DYNAMODB_ENDPOINT_URL: http://dynamodb-local:8000
+    volumes:
+      - ./data:/app/data
+    command: ["python", "scripts/setup_corpus.py"]
+    depends_on:
+      setup-dynamo:
+        condition: service_completed_successfully
+    networks:
+      - autoeval
+    restart: "no"
+
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
     build:
@@ -67,6 +87,8 @@ services:
       setup-dynamo:
         condition: service_completed_successfully
       setup-pinecone:
+        condition: service_completed_successfully
+      setup-corpus:
         condition: service_completed_successfully
     networks:
       - autoeval
