@@ -35,6 +35,22 @@ def floats_to_decimals(obj: Any) -> Any:
     return obj
 
 
+def decimals_to_floats(obj: Any) -> Any:
+    """Recursively convert Decimal values back to float after DynamoDB reads.
+
+    boto3/aioboto3 returns all numeric attributes as Decimal.  Without this
+    conversion Pydantic serialises Decimal as a string in dict[str, Any] fields,
+    which breaks any frontend code that calls .toFixed() on the received value.
+    """
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, dict):
+        return {k: decimals_to_floats(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [decimals_to_floats(v) for v in obj]
+    return obj
+
+
 # ── Client ────────────────────────────────────────────────────────────────────
 
 class DynamoDBClient:
@@ -73,7 +89,8 @@ class DynamoDBClient:
                 if sk is not None:
                     key["sk"] = sk
                 response = await table.get_item(Key=key)
-                return response.get("Item")  # type: ignore[return-value]
+                item = response.get("Item")
+                return decimals_to_floats(item) if item is not None else None
         except ClientError as exc:
             raise RuntimeError(
                 f"DynamoDB get_item failed on {self.table_name}: {exc}"
@@ -105,7 +122,7 @@ class DynamoDBClient:
                     kwargs["Limit"] = limit
 
                 response = await table.query(**kwargs)
-                return response.get("Items", [])  # type: ignore[return-value]
+                return [decimals_to_floats(i) for i in response.get("Items", [])]
         except ClientError as exc:
             raise RuntimeError(
                 f"DynamoDB query failed on {self.table_name}: {exc}"
@@ -183,7 +200,7 @@ class DynamoDBClient:
                     )
                     items.extend(response.get("Items", []))
 
-                return items
+                return [decimals_to_floats(i) for i in items]
         except ClientError as exc:
             raise RuntimeError(
                 f"DynamoDB scan failed on {self.table_name}: {exc}"
