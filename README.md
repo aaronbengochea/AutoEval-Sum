@@ -1,6 +1,10 @@
 # AutoEval-Sum
 
-Autonomous evaluation suite improvement system for summarization testing. AutoEval-Sum runs a deterministic two-iteration loop that generates an initial eval suite (v1), scores it with a judge, learns from the failures, and produces a targeted v2 suite designed to catch more of the same failure modes.
+AutoEval-Sum is an autonomous evaluation suite improvement system that tests and iteratively improves the quality of eval suites for LLM-powered summarization agents.
+
+The system centers around a **Summarizer** — the **Agent Under Test (AuT)** — a Gemini-powered agent that produces structured summaries of documents. Rather than evaluating individual summary outputs in isolation, AutoEval-Sum evaluates the *quality of the evaluation suite itself*: are the test cases actually capable of exposing the AuT's failure modes?
+
+To answer that, AutoEval-Sum runs a deterministic two-iteration loop. It generates an initial eval suite (v1), executes it against the AuT, scores the results with a judge across four rubric dimensions, and then uses a curriculum agent to learn from the failures and produce a targeted v2 suite designed to detect more of the same weaknesses. The delta between v1 and v2 is the primary signal of suite improvement.
 
 **Primary KPI**: Failure detection rate increase from v1 → v2
 **Secondary KPI**: Unique failure-tag coverage expansion
