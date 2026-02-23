@@ -52,7 +52,10 @@ class PineconeClient:
     def _get_genai_client(self) -> google_genai.Client:
         if self._genai_client is None:
             settings = get_settings()
-            self._genai_client = google_genai.Client(api_key=settings.google_api_key)
+            self._genai_client = google_genai.Client(
+                api_key=settings.google_api_key,
+                http_options={"api_version": "v1"},
+            )
         return self._genai_client
 
     def _get_index(self) -> Any:

@@ -19,8 +19,10 @@ from botocore.exceptions import ClientError
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
-ENDPOINT_URL = os.getenv("DYNAMODB_ENDPOINT_URL", "http://localhost:8000")
-REGION = os.getenv("AWS_REGION", "us-east-1")
+ENDPOINT_URL = os.getenv("DYNAMODB_ENDPOINT_URL")
+REGION = os.getenv("AWS_REGION")
+AWS_ACCESS_KEY_ID=os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY=os.getenv("AWS_SECRET_ACCESS_KEY")
 
 # ---------------------------------------------------------------------------
 # Table definitions
@@ -101,9 +103,8 @@ def setup_tables() -> None:
         "dynamodb",
         region_name=REGION,
         endpoint_url=ENDPOINT_URL,
-        # Local DynamoDB accepts any credentials
-        aws_access_key_id="local",
-        aws_secret_access_key="local",
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
 
     log.info("Connecting to DynamoDB at %s", ENDPOINT_URL)
