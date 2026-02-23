@@ -23,8 +23,8 @@ from pathlib import Path
 from typing import Any
 
 import spacy
-from google import generativeai as genai
-from google.generativeai import GenerativeModel
+from google import genai as google_genai
+from google.genai import types as genai_types
 
 from autoeval_sum.config.settings import get_settings
 from autoeval_sum.models.documents import EnrichedDocument, RawDocument
@@ -67,7 +67,7 @@ _CATEGORY_PROMPT = textwrap.dedent(
 
 # ── Module-level singletons (lazy-initialised) ────────────────────────────────
 _nlp: Any = None
-_gemini_model: GenerativeModel | None = None
+_genai_client: google_genai.Client | None = None
 
 
 def _get_nlp() -> Any:
@@ -78,27 +78,25 @@ def _get_nlp() -> Any:
     return _nlp
 
 
-def _get_model() -> GenerativeModel:
-    global _gemini_model
-    if _gemini_model is None:
+def _get_client() -> google_genai.Client:
+    global _genai_client
+    if _genai_client is None:
         settings = get_settings()
-        genai.configure(api_key=settings.google_api_key)
-        _gemini_model = GenerativeModel(settings.llm_model)
-    return _gemini_model
+        _genai_client = google_genai.Client(api_key=settings.google_api_key)
+    return _genai_client
 
 
 # ── Helper functions ──────────────────────────────────────────────────────────
 
 def _stable_doc_id(text: str, source_query_id: int) -> str:
-    """UUIDv7-style prefix with SHA-256 suffix for stable cross-run identity."""
-    import uuid6  # type: ignore[import]
-    # Embed content hash in the node field so the ID is both time-ordered and
-    # content-stable on the same machine across runs.
-    content_hash = int(hashlib.sha256(f"{source_query_id}:{text[:128]}".encode()).hexdigest(), 16)
-    # uuid6.uuid7() is time-based; we xor the node with the content hash for stability
-    base = uuid6.uuid7()
-    # Return as string — callers treat this as an opaque ID
-    return str(base)
+    """Deterministic ID derived from content hash, formatted as UUID.
+
+    Stable across runs: the same (query_id, text) pair always yields the same
+    doc_id, so re-ingesting the corpus produces identical IDs and DynamoDB
+    put_item is truly idempotent.
+    """
+    h = hashlib.sha256(f"{source_query_id}:{text[:128]}".encode()).hexdigest()
+    return f"{h[0:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:32]}"
 
 
 def _compute_entity_density(text: str, word_count: int) -> float:
@@ -123,11 +121,15 @@ def _tag_difficulty(word_count: int, entity_density: float) -> str:
 
 
 async def _count_tokens(text: str) -> int:
-    model = _get_model()
+    client = _get_client()
+    settings = get_settings()
     loop = asyncio.get_event_loop()
-    # count_tokens is synchronous; run in executor to avoid blocking the event loop
-    result = await loop.run_in_executor(None, model.count_tokens, text)
-    return int(result.total_tokens)
+
+    def _call() -> int:
+        result = client.models.count_tokens(model=settings.llm_model, contents=text)
+        return int(result.total_tokens)
+
+    return await loop.run_in_executor(None, _call)
 
 
 async def _truncate_to_token_limit(text: str, limit: int = MAX_AGENT_TOKENS) -> tuple[str, int, bool]:
@@ -157,7 +159,8 @@ async def _truncate_to_token_limit(text: str, limit: int = MAX_AGENT_TOKENS) -> 
 
 
 async def _classify_category(text: str) -> str:
-    model = _get_model()
+    client = _get_client()
+    settings = get_settings()
     prompt = _CATEGORY_PROMPT.format(
         categories=_CATEGORY_LIST_STR,
         text=text[:3000],  # use first 3 000 chars for classification
@@ -165,11 +168,12 @@ async def _classify_category(text: str) -> str:
     loop = asyncio.get_event_loop()
 
     def _call() -> str:
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(temperature=0, max_output_tokens=32),
+        response = client.models.generate_content(
+            model=settings.llm_model,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(temperature=0, max_output_tokens=32),
         )
-        return response.text.strip()
+        return (response.text or "").strip()
 
     raw = await loop.run_in_executor(None, _call)
 

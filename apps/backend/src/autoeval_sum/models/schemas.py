@@ -178,7 +178,7 @@ class SuiteMetrics(BaseModel):
     pass_rate: float = Field(..., ge=0.0, le=1.0)
     failure_detection_rate: float = Field(..., ge=0.0, le=1.0)
     top_failure_modes: Annotated[list[str], Field(max_length=5)]
-    worst_examples: Annotated[list[EvalCase], Field(max_length=5)]
+    worst_examples: list[EvalCase]
 
 
 # ── Curriculum output ─────────────────────────────────────────────────────────
