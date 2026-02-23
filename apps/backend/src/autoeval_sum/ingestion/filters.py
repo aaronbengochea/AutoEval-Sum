@@ -5,7 +5,7 @@ Filters
 -------
 1. English-language check  — text must be >= 90% printable ASCII characters.
    MS MARCO is an English corpus; this guards against encoding artifacts.
-2. Minimum word count     — text must have >= 500 whitespace-separated tokens.
+2. Minimum word count     — text must have >= 50 whitespace-separated tokens.
 
 Sampling
 --------
@@ -23,7 +23,7 @@ from autoeval_sum.models.documents import RawDocument
 
 log = logging.getLogger(__name__)
 
-MIN_WORD_COUNT: int = 500
+MIN_WORD_COUNT: int = 50
 MIN_ASCII_RATIO: float = 0.90
 
 

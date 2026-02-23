@@ -110,14 +110,14 @@ def _compute_entity_density(text: str, word_count: int) -> float:
 
 def _tag_difficulty(word_count: int, entity_density: float) -> str:
     """
-    Difficulty heuristic from the holistic plan:
-      easy   — 500–900 words  AND entity_density < 0.08
-      hard   — > 1500 words   OR  entity_density > 0.14
+    Difficulty heuristic calibrated for MSMARCO passage lengths (50–250 words):
+      easy   — <= 75 words   AND entity_density < 0.06  (short, low-density snippets)
+      hard   — > 150 words   OR  entity_density > 0.12  (longer or entity-rich passages)
       medium — everything else
     """
-    if word_count > 1500 or entity_density > 0.14:
+    if word_count > 150 or entity_density > 0.12:
         return "hard"
-    if word_count <= 900 and entity_density < 0.08:
+    if word_count <= 75 and entity_density < 0.06:
         return "easy"
     return "medium"
 
