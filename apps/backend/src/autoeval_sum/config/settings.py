@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     google_api_key: str = Field(..., description="Google API key for Gemini and embeddings")
     llm_model: str = Field(default="gemini-2.0-flash", description="Gemini model ID")
     embedding_model: str = Field(
-        default="text-embedding-004", description="Google embedding model ID"
+        default="gemini-embedding-001", description="Google embedding model ID"
     )
 
     # ── Pinecone ──────────────────────────────────────────────────────────────

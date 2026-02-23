@@ -52,10 +52,7 @@ class PineconeClient:
     def _get_genai_client(self) -> google_genai.Client:
         if self._genai_client is None:
             settings = get_settings()
-            self._genai_client = google_genai.Client(
-                api_key=settings.google_api_key,
-                http_options={"api_version": "v1"},
-            )
+            self._genai_client = google_genai.Client(api_key=settings.google_api_key)
         return self._genai_client
 
     def _get_index(self) -> Any:
@@ -69,7 +66,7 @@ class PineconeClient:
     # ── Embedding ──────────────────────────────────────────────────────────────
 
     def _embed_sync(self, text: str, task_type: str = _TASK_RETRIEVAL_DOCUMENT) -> list[float]:
-        """Synchronous Google text-embedding-004 call via google-genai SDK (uses /v1)."""
+        """Synchronous Google embedding call via google-genai SDK."""
         from google.genai import types as genai_types
 
         settings = get_settings()
@@ -78,7 +75,10 @@ class PineconeClient:
         result = client.models.embed_content(
             model=settings.embedding_model,
             contents=text,
-            config=genai_types.EmbedContentConfig(task_type=sdk_task_type),
+            config=genai_types.EmbedContentConfig(
+                task_type=sdk_task_type,
+                output_dimensionality=settings.pinecone_embedding_dimension,
+            ),
         )
         return list(result.embeddings[0].values)
 
