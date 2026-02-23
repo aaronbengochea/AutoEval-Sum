@@ -18,15 +18,13 @@ OUTPUT FORMAT (return valid JSON only, no prose outside the JSON):
   "key_points": [
     "<point 1, maximum 24 words>",
     "<point 2, maximum 24 words>",
-    "<point 3, maximum 24 words>",
-    "<point 4, maximum 24 words>",
-    "<point 5, maximum 24 words>"
+    "<point 3, maximum 24 words>"
   ],
   "abstract": "<summary paragraph, maximum 120 words>"
 }
 
 RULES:
-- Return exactly 5 key_points. No more, no fewer.
+- Return 3 to 5 key_points. Short documents may have fewer; do not pad with redundant points.
 - Each key_point must be 24 words or fewer.
 - The abstract must be 120 words or fewer.
 - Every claim must be directly supported by the source document.

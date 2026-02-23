@@ -35,13 +35,13 @@ class SummaryStructured(BaseModel):
     Output of the Summarizer Agent.
 
     Constraints (enforced by validators):
-    - exactly 5 key_points
+    - 3–5 key_points (short passages may not warrant 5)
     - each key_point <= 24 words
     - abstract <= 120 words
     """
 
     title: str = Field(..., min_length=1)
-    key_points: Annotated[list[str], Field(min_length=5, max_length=5)]
+    key_points: Annotated[list[str], Field(min_length=3, max_length=5)]
     abstract: str = Field(..., min_length=1)
 
     @field_validator("key_points")
