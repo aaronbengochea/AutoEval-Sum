@@ -18,6 +18,24 @@ services:
       timeout: 5s
       retries: 5
 
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    container_name: autoeval-dynamodb-admin
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      DYNAMO_ENDPOINT: ${DYNAMODB_ENDPOINT_URL}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      dynamodb-local:
+        condition: service_healthy
+    networks:
+      - autoeval
+
   # ── DynamoDB table setup (one-shot, idempotent) ────────────────────────────
   setup-dynamo:
     build:
