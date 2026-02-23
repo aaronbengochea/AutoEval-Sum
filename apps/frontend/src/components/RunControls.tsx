@@ -11,15 +11,20 @@ interface Props {
   onRunStarted: (runId: string) => void;
 }
 
+const CORPUS_MIN = 50;
+const CORPUS_MAX = 250;
+const SUITE_MIN = 20;
+const SUITE_MAX = 50;
+const FIXED_SEED = 42;
+
 export function RunControls({ activeRunId, activeStatus, onRunStarted }: Props) {
   const qc = useQueryClient();
-  const [seed, setSeed] = useState(42);
   const [corpusSize, setCorpusSize] = useState(150);
   const [suiteSize, setSuiteSize] = useState(20);
 
   const startMutation = useMutation({
     mutationFn: () =>
-      api.startRun({ seed, corpus_size: corpusSize, suite_size: suiteSize }),
+      api.startRun({ seed: FIXED_SEED, corpus_size: corpusSize, suite_size: suiteSize }),
     onSuccess: (data) => {
       onRunStarted(data.run_id);
       qc.invalidateQueries({ queryKey: ["run", data.run_id] });
@@ -35,28 +40,63 @@ export function RunControls({ activeRunId, activeStatus, onRunStarted }: Props) 
 
   const isActive = activeStatus === "queued" || activeStatus === "running";
 
+  const handleCorpusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = Number(e.target.value);
+    setCorpusSize(Math.min(CORPUS_MAX, Math.max(CORPUS_MIN, v)));
+  };
+
+  const handleSuiteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = Number(e.target.value);
+    setSuiteSize(Math.min(SUITE_MAX, Math.max(SUITE_MIN, v)));
+  };
+
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 backdrop-blur-sm">
       <div className="grid grid-cols-3 gap-4 mb-5">
-        {[
-          { label: "Seed", value: seed, setter: setSeed, hint: "RNG seed for reproducibility" },
-          { label: "Corpus size", value: corpusSize, setter: setCorpusSize, hint: "Docs loaded from MSMARCO" },
-          { label: "Suite size", value: suiteSize, setter: setSuiteSize, hint: "Eval cases per iteration" },
-        ].map(({ label, value, setter, hint }) => (
-          <label key={label} className="space-y-1.5">
-            <div>
-              <span className="text-xs font-mono font-medium text-zinc-300">{label}</span>
-              <span className="text-xs font-mono text-zinc-600 ml-2">{hint}</span>
-            </div>
-            <input
-              type="number"
-              value={value}
-              onChange={(e) => setter(Number(e.target.value))}
-              disabled={isActive}
-              className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm font-mono text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            />
-          </label>
-        ))}
+        {/* Seed — locked */}
+        <div className="space-y-1.5">
+          <div>
+            <span className="text-xs font-mono font-medium text-zinc-300">Seed</span>
+            <span className="text-xs font-mono text-zinc-600 ml-2">fixed for reproducibility</span>
+          </div>
+          <div className="w-full rounded-lg bg-zinc-800/50 border border-zinc-700/50 px-3 py-2 text-sm font-mono text-zinc-500 select-none">
+            {FIXED_SEED}
+          </div>
+        </div>
+
+        {/* Corpus size */}
+        <label className="space-y-1.5">
+          <div>
+            <span className="text-xs font-mono font-medium text-zinc-300">Corpus size</span>
+            <span className="text-xs font-mono text-zinc-600 ml-2">{CORPUS_MIN}–{CORPUS_MAX} docs</span>
+          </div>
+          <input
+            type="number"
+            value={corpusSize}
+            min={CORPUS_MIN}
+            max={CORPUS_MAX}
+            onChange={handleCorpusChange}
+            disabled={isActive}
+            className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm font-mono text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          />
+        </label>
+
+        {/* Suite size */}
+        <label className="space-y-1.5">
+          <div>
+            <span className="text-xs font-mono font-medium text-zinc-300">Suite size</span>
+            <span className="text-xs font-mono text-zinc-600 ml-2">{SUITE_MIN}–{SUITE_MAX} cases</span>
+          </div>
+          <input
+            type="number"
+            value={suiteSize}
+            min={SUITE_MIN}
+            max={SUITE_MAX}
+            onChange={handleSuiteChange}
+            disabled={isActive}
+            className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm font-mono text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          />
+        </label>
       </div>
 
       <div className="flex items-center gap-3">

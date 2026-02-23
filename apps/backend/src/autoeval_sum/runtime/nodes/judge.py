@@ -156,7 +156,8 @@ def make_judge_node(
                 judge_results.append(result_dict)
 
         suite_id = f"{run_id}#v{iteration_n}"
-        metrics = compute_suite_metrics(suite_id, suite_data, judge_results)
+        suite_size: int = state.get("suite_size", settings.default_suite_size)  # type: ignore[assignment]
+        metrics = compute_suite_metrics(suite_id, suite_data, judge_results, suite_size=suite_size)
 
         # Persist results to DynamoDB
         if results_db is not None and judge_results:

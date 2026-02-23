@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from autoeval_sum.api.dependencies import get_documents_db
 from autoeval_sum.api.models import ErrorDetail
@@ -29,7 +29,17 @@ log = logging.getLogger(__name__)
 
 class PrepareRequest(BaseModel):
     seed: int = Field(default=42, description="RNG seed for deterministic sampling")
-    corpus_size: int = Field(default=50, ge=10, le=200, description="Target corpus size")
+    corpus_size: int = Field(default=50, description="Target corpus size")
+
+    @field_validator("corpus_size")
+    @classmethod
+    def validate_corpus_size(cls, v: int) -> int:
+        settings = get_settings()
+        if v < settings.corpus_size_min or v > settings.corpus_size_max:
+            raise ValueError(
+                f"corpus_size must be between {settings.corpus_size_min} and {settings.corpus_size_max}"
+            )
+        return v
 
 
 class PrepareResponse(BaseModel):

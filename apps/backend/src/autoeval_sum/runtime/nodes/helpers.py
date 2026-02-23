@@ -65,6 +65,7 @@ def compute_suite_metrics(
     suite_id: str,
     eval_suite: list[dict[str, Any]],
     judge_results: list[dict[str, Any]],
+    suite_size: int = 20,
 ) -> SuiteMetrics:
     """
     Derive SuiteMetrics from judge results.
@@ -77,6 +78,9 @@ def compute_suite_metrics(
         Serialised EvalCase list (used to look up worst examples).
     judge_results:
         Serialised JudgeCaseResult list.
+    suite_size:
+        Total number of cases in the suite. Used to derive the regression-core
+        size (40% of suite_size, minimum 1) passed to the Curriculum agent.
     """
     if not judge_results:
         # No results — return zero metrics
@@ -127,10 +131,11 @@ def compute_suite_metrics(
     failure_detection_rate = round(fail_count / n, 4)
     top_failure_modes = [tag for tag, _ in failure_tag_counter.most_common(5)]
 
-    # Worst examples: 5 lowest aggregate-score cases
+    # Worst examples: bottom 40% of suite_size (regression core for curriculum)
+    n_worst = max(1, round(suite_size * 0.4))
     result_by_eval_id = {r.eval_id: r for r in validated_results}
     sorted_results = sorted(validated_results, key=lambda r: r.aggregate_score)
-    worst_eval_ids = {r.eval_id for r in sorted_results[:5]}
+    worst_eval_ids = {r.eval_id for r in sorted_results[:n_worst]}
     worst_examples = [
         EvalCase.model_validate(c)
         for c in eval_suite

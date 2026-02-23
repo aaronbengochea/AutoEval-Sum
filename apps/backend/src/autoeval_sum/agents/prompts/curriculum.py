@@ -3,7 +3,7 @@ Curriculum Agent prompt.
 
 Input variables:
   {suite_v1_metrics_json}  — JSON of SuiteMetrics for the completed v1 suite.
-  {worst_examples_json}    — JSON array of the 5 worst-performing EvalCase objects.
+  {worst_examples_json}    — JSON array of the worst-performing EvalCase objects (40% of suite_size, minimum 1).
   {top_failure_modes}      — Comma-separated list of the top failure tags by frequency.
   {doc_catalog_json}       — JSON array of all available documents (doc_id, difficulty_tag,
                              category_tag, word_count).

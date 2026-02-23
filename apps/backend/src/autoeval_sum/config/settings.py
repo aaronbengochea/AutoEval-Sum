@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -46,11 +46,22 @@ class Settings(BaseSettings):
     dynamodb_results_table: str = Field(default="EvalResults")
 
     # ── Run defaults ──────────────────────────────────────────────────────────
-    default_seed: int = Field(default=42, description="Default RNG seed")
-    default_corpus_size: int = Field(default=50, ge=10, le=200)
-    default_suite_size: int = Field(default=20, ge=1)
-    max_token_budget: int = Field(default=300_000, description="Per-run token cap")
-    run_workers: int = Field(default=4, description="Bounded parallelism per suite")
+    default_seed: int = Field(..., description="Default RNG seed")
+    corpus_size_min: int = Field(..., ge=1, description="Minimum allowed corpus size")
+    corpus_size_max: int = Field(..., ge=1, description="Maximum allowed corpus size")
+    default_corpus_size: int = Field(..., description="Default corpus size for ingestion")
+    default_suite_size: int = Field(..., ge=1, description="Default eval suite size")
+    max_token_budget: int = Field(..., description="Per-run token cap")
+    run_workers: int = Field(..., description="Bounded parallelism per suite")
+
+    @model_validator(mode="after")
+    def validate_corpus_size_bounds(self) -> "Settings":
+        if not (self.corpus_size_min <= self.default_corpus_size <= self.corpus_size_max):
+            raise ValueError(
+                f"default_corpus_size={self.default_corpus_size} must be between "
+                f"corpus_size_min={self.corpus_size_min} and corpus_size_max={self.corpus_size_max}"
+            )
+        return self
 
 
 @lru_cache
