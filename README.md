@@ -12,7 +12,7 @@ Autonomous evaluation suite improvement system for summarization testing. AutoEv
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                       CORPUS (MSMARCO)                       │
-│         Fetch → Filter → Sample → Enrich → Persist          │
+│         Fetch → Filter → Sample → Enrich → Persist           │
 └─────────────────────────────┬────────────────────────────────┘
                               │
               ┌───────────────▼───────────────┐
