@@ -6,7 +6,6 @@ GET  /api/v1/ingestion/status   — return corpus stats from the Documents table
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -24,8 +23,6 @@ from autoeval_sum.ingestion.persist import list_documents, save_documents
 
 router = APIRouter(prefix="/api/v1/ingestion", tags=["ingestion"])
 log = logging.getLogger(__name__)
-
-DATA_DIR = Path(os.getenv("DATA_DIR", "data"))
 
 
 # ── Request / Response models ─────────────────────────────────────────────────
@@ -70,11 +67,12 @@ async def prepare_ingestion(
     docs_db: DynamoDBClient = Depends(get_documents_db),
 ) -> PrepareResponse:
     settings = get_settings()
-    corpus_dir = DATA_DIR / "corpus"
+    data_dir = Path(settings.data_dir)
+    corpus_dir = data_dir / "corpus"
 
     try:
         # 1. Fetch raw passages (uses HF cache after first run)
-        raw_docs = fetch_raw_documents(data_dir=DATA_DIR)
+        raw_docs = fetch_raw_documents(data_dir=data_dir)
 
         # 2. Filter and sample
         filtered = filter_documents(raw_docs)

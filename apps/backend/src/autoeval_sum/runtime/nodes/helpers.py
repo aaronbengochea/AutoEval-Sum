@@ -10,6 +10,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from autoeval_sum.config.settings import get_settings
+
 from autoeval_sum.models.documents import EnrichedDocument
 from autoeval_sum.models.schemas import EvalCase, JudgeCaseResult, SuiteMetrics
 
@@ -42,8 +44,11 @@ def doc_from_dynamo_item(item: dict[str, Any]) -> EnrichedDocument:
 
 
 def read_doc_text(content_path: str) -> str:
-    """Read document text from its on-disk content file."""
-    path = Path(content_path)
+    """Read document text from its on-disk content file.
+
+    content_path is relative to the data/ root (e.g. "corpus/{doc_id}.txt").
+    """
+    path = Path(get_settings().data_dir) / content_path
     if not path.exists():
         raise FileNotFoundError(f"Document text not found at {content_path}")
     return path.read_text(encoding="utf-8")

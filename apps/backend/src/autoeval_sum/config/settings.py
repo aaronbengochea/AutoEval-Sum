@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     app_name: str = "autoeval-sum"
     debug: bool = False
     log_level: str = "INFO"
+    data_dir: str = Field(default="data", description="Root directory for corpus text files")
 
     # ── Google / Gemini ───────────────────────────────────────────────────────
     google_api_key: str = Field(..., description="Google API key for Gemini and embeddings")

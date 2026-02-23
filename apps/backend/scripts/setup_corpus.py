@@ -15,7 +15,6 @@ Usage:
 
 import asyncio
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -28,9 +27,6 @@ from autoeval_sum.ingestion.persist import list_documents, save_documents
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
-
-DATA_DIR = Path(os.getenv("DATA_DIR", "data"))
-
 
 async def setup_corpus() -> None:
     settings = get_settings()
@@ -56,11 +52,12 @@ async def setup_corpus() -> None:
         settings.default_corpus_size,
     )
 
-    corpus_dir = DATA_DIR / "corpus"
+    data_dir = Path(settings.data_dir)
+    corpus_dir = data_dir / "corpus"
     corpus_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Fetch raw passages from MSMARCO (uses HF cache after first run)
-    raw_docs = fetch_raw_documents(data_dir=DATA_DIR)
+    raw_docs = fetch_raw_documents(data_dir=data_dir)
 
     # 2. Filter (English + min word count) and deterministic sample
     filtered = filter_documents(raw_docs)
