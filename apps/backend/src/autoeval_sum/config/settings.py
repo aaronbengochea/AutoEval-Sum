@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # ── Run defaults ──────────────────────────────────────────────────────────
     default_seed: int = Field(default=42, description="Default RNG seed")
-    default_corpus_size: int = Field(default=150, ge=100, le=200)
+    default_corpus_size: int = Field(default=50, ge=10, le=200)
     default_suite_size: int = Field(default=20, ge=1)
     max_token_budget: int = Field(default=300_000, description="Per-run token cap")
     run_workers: int = Field(default=4, description="Bounded parallelism per suite")

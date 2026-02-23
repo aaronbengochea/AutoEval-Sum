@@ -32,7 +32,7 @@ DATA_DIR = Path(os.getenv("DATA_DIR", "data"))
 
 class PrepareRequest(BaseModel):
     seed: int = Field(default=42, description="RNG seed for deterministic sampling")
-    corpus_size: int = Field(default=150, ge=100, le=200, description="Target corpus size")
+    corpus_size: int = Field(default=50, ge=10, le=200, description="Target corpus size")
 
 
 class PrepareResponse(BaseModel):
